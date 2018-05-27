@@ -3,6 +3,38 @@ var app = express();
 var path = require('path');
 var bodyParser = require('body-parser');
 
+var five = require("johnny-five");
+var raspi = require("raspi-io");
+
+var board = new five.Board({io: new raspi()});
+var led;
+
+board.on("ready", function() {
+
+  led = new five.Led("P1-13");
+
+  // Create a new `motion` hardware instance.
+  var motion = new five.Motion(7);
+
+  // "calibrated" occurs once, at the beginning of a session,
+  motion.on("calibrated", function() {
+    console.log("calibrated");
+  });
+
+  // "motionstart" events are fired when the "calibrated"
+  // proximal area is disrupted, generally by some form of movement
+  motion.on("motionstart", function() {
+    console.log("motionstart");
+  });
+
+  // "motionend" events are fired following a "motionstart" event
+  // when no movement has occurred in X ms
+  motion.on("motionend", function() {
+    console.log("motionend");
+  });
+
+});
+
 //APP CONFIGURATION
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -20,7 +52,19 @@ apiRouter.route('/leds').post(function (req, res) {
             ? 'turn On Led'
             : 'turn Off Led');
 
-        res.json({success: true, message: message});
+
+	if(value == "1")
+	{ 
+		//led.on();
+		led.blink(500); 
+	} 
+	else 
+	{
+		led.stop();
+		led.off();
+	}
+
+        res.json({success: true, message: 'from the server: '+message});
     });
 
 apiRouter.route('/sensors').post(function (req, res) {
